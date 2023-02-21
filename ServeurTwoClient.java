@@ -1,4 +1,3 @@
-
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -8,53 +7,37 @@ public class ServeurTwoClient {
     public static void main(String[] args) throws ClassNotFoundException {
         int port = 1286;
         Scanner scan = new Scanner(System.in);
+        int nbMaxClients = 2;
+        int nbClients = 0;
+
         try {
-        	
-             
-            
             ServerSocket ss = new ServerSocket(port);
             System.out.println("Le serveur est en attente");
-            Socket soc1 = ss.accept();
-            Socket soc2 = ss.accept();
+            while (nbClients < nbMaxClients) {
+                Socket clientSocket = ss.accept();
+                nbClients++;
+                System.out.println("Accepted connection from client " + nbClients + ": " + clientSocket.getInetAddress());
+                System.out.println("Client " + nbClients + " IP address: " + clientSocket.getInetAddress().getHostAddress());
+                System.out.println("Client " + nbClients + " port: " + clientSocket.getPort());
 
-            System.out.println("Accepted connection from client 1: " + soc1.getInetAddress());
-            System.out.println("Client 1 IP address: " + soc1.getInetAddress().getHostAddress());
-            System.out.println("Client 1 port: " + soc1.getPort());
+                ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
+                ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
 
-            System.out.println("Accepted connection from client 2: " + soc2.getInetAddress());
-            System.out.println("Client 2 IP address: " + soc2.getInetAddress().getHostAddress());
-            System.out.println("Client 2 port: " + soc2.getPort());
-            //premier client
-           
+                Object chaine1 = (String) in.readObject();
+                Object chaine2 = (String) in.readObject();
 
-            ObjectInputStream in1 = new ObjectInputStream(soc1.getInputStream());
-            ObjectOutputStream out1 = new ObjectOutputStream(soc1.getOutputStream());
-            
-            Object chaine1 = (String)in1.readObject();
-            Object chaine2 = (String)in1.readObject();
-            
-            if (((String) chaine1).contains((String)chaine2)) {
-                out1.writeObject(chaine1+ " contient " + chaine2);
-                out1.flush();
-            } else {
-                out1.writeObject(chaine1 + " ne contient pas " + chaine2);
-                out1.flush();
-            }
-            //deuxeme client
-            
+                if (((String) chaine1).contains((String) chaine2)) {
+                    out.writeObject(chaine1 + " contient " + chaine2);
+                    out.flush();
+                } else {
+                    out.writeObject(chaine1 + " ne contient pas " + chaine2);
+                    out.flush();
+                }
 
-            ObjectInputStream in2 = new ObjectInputStream(soc2.getInputStream());
-            ObjectOutputStream out2 = new ObjectOutputStream(soc2.getOutputStream());
-
-            Object chaine3 =(String)in2.readObject();
-            Object chaine4 =(String)in2.readObject();
-            
-            if (((String) chaine3).contains((String)chaine4)) {
-                out2.writeObject(chaine3 + " contient " + chaine4);
-                out2.flush();
-            } else {
-                out2.writeObject(chaine3 + " ne contient pas " + chaine4);
-                out2.flush();
+                in.close();
+                out.close();
+                clientSocket.close();
+                nbClients--;
             }
 
             ss.close();
